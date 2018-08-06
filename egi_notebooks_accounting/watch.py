@@ -7,6 +7,19 @@ from kubernetes import client, config, watch
 import requests
 
 
+# Some constants, may be moved to configuration
+USERNAME_ANNOTATION = 'hub.jupyter.org/username'
+DEFAULT_USERNAME = 'nobody'
+DEFAULT_SPOOL_DIR = '/var/spool/egi-notebooks/'
+DEFAULT_NS = 'default'
+DEFAULT_PROMETHEUS_URL = 'http://localhost:9000'
+
+# name of the environment variables where config is expected
+NAMESPACE_ENV = 'NOTEBOOKS_NS'
+SPOOL_DIR_ENV = 'SPOOL_DIR'
+PROMETHEUS_URL_ENV = 'PROMETHEUS_URL'
+
+
 def get_usage_info(prometheus_url, namespace, pod_name):
     # TODO(enolfc): Making multiple queries here?
     query_str = ("container_cpu_usage_seconds_total{{namespace='{0}',"
@@ -20,8 +33,8 @@ def get_usage_info(prometheus_url, namespace, pod_name):
 
 def process_event(event, namespace, prometheus_url, spool_dir):
     pod = event['object']
-    username = pod.metadata.annotations.get('hub.jupyter.org/username',
-                                            'nobody')
+    username = pod.metadata.annotations.get(USERNAME_ANNOTATION,
+                                            DEFAULT_USERNAME)
     logging.debug("Got %s for pod %s (user: %s)",
                   event['type'],
                   pod.medata.uid,
@@ -61,7 +74,7 @@ def process_event(event, namespace, prometheus_url, spool_dir):
         f.write(json.dumps(notebook))
 
 
-def watch(namespace='', prometheus_url='', spool_dir='spool'):
+def watch(namespace='', prometheus_url='', spool_dir=''):
     config.load_incluster_config()
     v1 = client.CoreV1Api()
     w = watch.Watch()
@@ -71,7 +84,10 @@ def watch(namespace='', prometheus_url='', spool_dir='spool'):
 
 
 def main():
-    watch('training', 'http://prom-prometheus-server.default.svc.cluster.local')
+    namespace = os.environt.get(NAMESAPACE_ENV, DEFAULT_NAMESPACE)
+    spool_dir = os.environ.get(SPOOL_DIR_ENV, DEFAULT_SPOOL_DIR)
+    prometheus_url = os.environ.get(PROMETHEUS_URL_ENV, DEFAULT_PROMETHEUS_URL)
+    watch(namespace, prometheus_url, spool_dir)
 
 
 if __name__ == '__main__':
