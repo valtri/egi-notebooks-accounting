@@ -5,9 +5,17 @@ import pprint
 import time
 
 import attr
+import requests
 import schedule
 
 from .model import db, init_db, Notebook
+
+DEFAULT_NAMESPACE = 'default'
+DEFAULT_PROMETHEUS_URL = 'http://localhost:9000'
+# name of the environment variables where config is expected
+NAMESPACE_ENV = 'NOTEBOOKS_NS'
+PROMETHEUS_URL_ENV = 'PROMETHEUS_URL'
+
 
 @attr.s
 class JobRecord:
@@ -58,8 +66,11 @@ class JobRecord:
         }
 
     def dump(self):
-        d = {k: v for (k, v) in self.as_dict().items() if v is not None}
-        return pprint.pformat(d)
+        record = []
+        for k, v in self.as_dict().items():
+            if v is not None:
+                record.append('{0}: {1}'.format(k, v))
+        return '\n'.join(record)
 
     @classmethod
     def from_notebook(cls, notebook, **defaults):
@@ -70,23 +81,49 @@ class JobRecord:
                    end_time=notebook.end,
                    wall=(notebook.end - notebook.start))
 
+def get_usage_stats(prometheus_url, namespace):
+    end = int(time.time())
+    # 6 hours before now
+    start = end - 6 * 3600
+    query_str = ("container_cpu_usage_seconds_total{{namespace='{0}',"
+                 "pod_name=~'^jupyter-.*',container_name='notebook'}}")
+    params = {'query': query_str.format(namespace),
+              # is this 4h safe enough?
+              'start': start, 'end': end, 'step': '4h'}
+    r = requests.get('{0}/api/v1/query_range'.format(prometheus_url), params=params)
+    pods = {}
+    for result in r.json()['data']['result']:
+        # assuming this will be always in the same format
+        # not very reliable if you ask me ;)
+        name = result['metric']['name'].split('_')[-2]
+        # last known value
+        pods[name] = result['values'][-1][1]
+    return pods
 
-def dump(spool_dir):
+
+def dump(prometheus_url, namespace, spool_dir):
     db.connect()
-    print("*" * 80)
+    pod_usage = get_usage_stats(prometheus_url, namespace)
+    records = []
     for notebook in Notebook.select().where(Notebook.processed == False,
                                             Notebook.end != None):
-        print(JobRecord.from_notebook(notebook).dump())
+        notebook.cpu_time = pod_usage.get(notebook.uid, 0.0)
+        records.append(JobRecord.from_notebook(notebook).dump())
         notebook.processed = True
-    print("*" * 80)
+    print('\n'.join(['APEL-individual-job-message: v0.3',
+                     '\n%%\n'.join(records)]))
     db.close()
 
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
     init_db()
-    dump('')
-    schedule.every(1).minute.do(dump, '')
+    namespace = os.environ.get(NAMESPACE_ENV, DEFAULT_NAMESPACE)
+    logging.debug('Namespace to watch: %s', namespace)
+    prometheus_url = os.environ.get(PROMETHEUS_URL_ENV, DEFAULT_PROMETHEUS_URL)
+    logging.debug('Prometheus server at %s', prometheus_url)
+    dump(prometheus_url, namespace, '')
+    #schedule.every(1).minute.do(dump, '')
     while True:
         schedule.run_pending()
         time.sleep(10)

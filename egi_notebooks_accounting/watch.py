@@ -18,23 +18,8 @@ DEFAULT_PROMETHEUS_URL = 'http://localhost:9000'
 NAMESPACE_ENV = 'NOTEBOOKS_NS'
 PROMETHEUS_URL_ENV = 'PROMETHEUS_URL'
 
-def get_usage_info(prometheus_url, namespace, pod_name):
-    # TODO(enolfc): Making multiple queries here?
-    query_str = ("container_cpu_usage_seconds_total{{namespace='{0}',"
-                 "pod_name='{1}',container_name='notebook'}}")
-    params = {'query': query_str.format(namespace, pod_name)}
-    r = requests.get('{0}/api/v1/query'.format(prometheus_url), params=params)
-    result = r.json()['data']['result']
-    # take the last value
-    try:
-        return result[-1]['value'][1]
-    except IndexError:
-        # oops, what happened?
-        logging.error('Unexpected exception while processing: %s', result)
-        return 0.
 
-
-def process_event(event, namespace, prometheus_url):
+def process_event(event, namespace):
     pod = event['object']
     username = pod.metadata.annotations.get(USERNAME_ANNOTATION,
                                             DEFAULT_USERNAME)
@@ -67,21 +52,17 @@ def process_event(event, namespace, prometheus_url):
             logging.debug("Got terminated date from k8s: %s", state.terminated.finished_at)
             notebook.end = state.terminated.finished_at.timestamp()
 
-    if notebook.end:
-        notebook.cpu_time = get_usage_info(prometheus_url,
-                                           namespace,
-                                           pod.metadata.name)
     notebook.save()
     db.close()
 
 
-def watch(namespace='', prometheus_url=''):
+def watch(namespace=''):
     kubernetes.config.load_incluster_config()
     v1 = kubernetes.client.CoreV1Api()
     w = kubernetes.watch.Watch()
     for event in w.stream(v1.list_namespaced_pod, namespace=namespace,
                           label_selector='component=singleuser-server'):
-        process_event(event, namespace, prometheus_url)
+        process_event(event, namespace) 
 
 
 def main():
@@ -89,9 +70,7 @@ def main():
     init_db()
     namespace = os.environ.get(NAMESPACE_ENV, DEFAULT_NAMESPACE)
     logging.debug('Namespace to watch: %s', namespace)
-    prometheus_url = os.environ.get(PROMETHEUS_URL_ENV, DEFAULT_PROMETHEUS_URL)
-    logging.debug('Prometheus server at %s', prometheus_url)
-    watch(namespace, prometheus_url)
+    watch(namespace)
 
 
 if __name__ == '__main__':
