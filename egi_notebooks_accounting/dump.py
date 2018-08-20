@@ -5,6 +5,7 @@ import pprint
 import time
 
 import attr
+import dirq
 import requests
 import schedule
 
@@ -81,6 +82,7 @@ class JobRecord:
                    end_time=notebook.end,
                    wall=(notebook.end - notebook.start))
 
+
 def get_usage_stats(prometheus_url, namespace):
     end = int(time.time())
     # 6 hours before now
@@ -109,9 +111,15 @@ def dump(prometheus_url, namespace, spool_dir):
                                             Notebook.end != None):
         notebook.cpu_time = pod_usage.get(notebook.uid, 0.0)
         records.append(JobRecord.from_notebook(notebook).dump())
+    mesage = '\n'.join(['APEL-individual-job-message: v0.3',
+                        '\n%%\n'.join(records)])
+    queue = dirq.QueueSimple.QueueSimple(spool_dir)
+    queue.add(message)
+    # once dumped, set the notebooks as processed
+    for notebook in Notebook.select().where(Notebook.processed == False,
+                                            Notebook.end != None):
         notebook.processed = True
-    print('\n'.join(['APEL-individual-job-message: v0.3',
-                     '\n%%\n'.join(records)]))
+        notebook.save()
     db.close()
 
 
@@ -122,11 +130,14 @@ def main():
     logging.debug('Namespace to watch: %s', namespace)
     prometheus_url = os.environ.get(PROMETHEUS_URL_ENV, DEFAULT_PROMETHEUS_URL)
     logging.debug('Prometheus server at %s', prometheus_url)
+    # first dump now
     dump(prometheus_url, namespace, '')
-    #schedule.every(1).minute.do(dump, '')
+    # and every 6 hours from now
+    schedule.every(6).minutes.do(dump, prometheus_url, namespace, '')
     while True:
         schedule.run_pending()
-        time.sleep(10)
+        # 5 minutes sleep, am I using the right tool here?
+        time.sleep(300)
 
 if __name__ == '__main__':
     main()
