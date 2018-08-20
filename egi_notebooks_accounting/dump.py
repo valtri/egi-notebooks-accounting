@@ -5,7 +5,7 @@ import pprint
 import time
 
 import attr
-import dirq
+from dirq import QueueSimple
 import requests
 import schedule
 
@@ -84,6 +84,7 @@ class JobRecord:
 
 
 def get_usage_stats(prometheus_url, namespace):
+    logging.debug("Getting usage information from prometheus")
     end = int(time.time())
     # 6 hours before now
     start = end - 6 * 3600
@@ -111,10 +112,11 @@ def dump(prometheus_url, namespace, spool_dir):
                                             Notebook.end != None):
         notebook.cpu_time = pod_usage.get(notebook.uid, 0.0)
         records.append(JobRecord.from_notebook(notebook).dump())
-    mesage = '\n'.join(['APEL-individual-job-message: v0.3',
-                        '\n%%\n'.join(records)])
-    queue = dirq.QueueSimple.QueueSimple(spool_dir)
+    message = '\n'.join(['APEL-individual-job-message: v0.3',
+                         '\n%%\n'.join(records)])
+    queue = QueueSimple.QueueSimple(spool_dir)
     queue.add(message)
+    logging.debug("Dumped %d records to spool dir", len(records))
     # once dumped, set the notebooks as processed
     for notebook in Notebook.select().where(Notebook.processed == False,
                                             Notebook.end != None):
