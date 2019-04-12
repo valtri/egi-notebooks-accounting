@@ -34,10 +34,6 @@ def process_event(event, namespace):
     except Notebook.DoesNotExist:
         notebook = Notebook(uid=pod.metadata.uid, username=username)
 
-    if not notebook.start:
-        # first time we see the pod, use current time as start
-        notebook.start = datetime.datetime.now().timestamp()
-
     if event['type'] == 'DELETED' and not notebook.end:
         # make sure we capture some end time
         notebook.end = datetime.datetime.now().timestamp()
@@ -69,7 +65,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     init_db()
     namespace = os.environ.get(NAMESPACE_ENV, DEFAULT_NAMESPACE)
-    logging.debug('Namespace to watch: %s', namespace)
+    logging.debug('Watching namespace: %s', namespace)
     watch(namespace)
 
 

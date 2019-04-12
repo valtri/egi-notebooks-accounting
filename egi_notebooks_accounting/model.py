@@ -10,6 +10,7 @@ NOTEBOOK_DB_ENV = 'NOTEBOOK_DB'
 
 db = peewee.SqliteDatabase(None)
 
+
 class Notebook(peewee.Model):
     uid = peewee.CharField()
     username = peewee.CharField()
