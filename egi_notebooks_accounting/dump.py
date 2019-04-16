@@ -85,10 +85,10 @@ class VMRecord:
         record = cls(global_user_name=notebook.username,
                      local_id=notebook.uid,
                      start_time=notebook.start,
+                     end_time=notebook.end,
                      **defaults)
         if notebook.start:
             if notebook.end:
-                record.end = notebook.end
                 record.wall = notebook.end - notebook.start
             else:
                 now = datetime.now().timestamp()
@@ -145,11 +145,12 @@ def dump(prometheus_url, namespace, spool_dir, site_config={}):
         records.append(r)
         if notebook.end:
             processed_notebooks.append(notebook)
-    message = '\n'.join(['APEL-individual-job-message: v0.3',
-                         '\n%%\n'.join(records)])
-    queue = QueueSimple.QueueSimple(spool_dir)
-    queue.add(message)
-    logging.debug("Dumped %d records to spool dir", len(records))
+    if records:
+        message = '\n'.join(['APEL-individual-job-message: v0.3',
+                             '\n%%\n'.join(records)])
+        queue = QueueSimple.QueueSimple(spool_dir)
+        queue.add(message)
+        logging.debug("Dumped %d records to spool dir", len(records))
     # once dumped, set the notebooks as processed if finished
     for notebook in processed_notebooks:
         notebook.processed = True
