@@ -16,7 +16,6 @@ class Notebook(peewee.Model):
     username = peewee.CharField()
     start = peewee.FloatField(null=True)
     end = peewee.FloatField(null=True)
-    cpu_time = peewee.DoubleField(null=True)
     processed = peewee.BooleanField(default=False)
 
     class Meta:

@@ -1,17 +1,16 @@
 from datetime import datetime
 import logging
 import os
-import pprint
 import time
 
 import attr
 from dirq import QueueSimple
 import requests
-import schedule
 
 from .model import db, init_db, Notebook
+from .utils import get_k8s_namespace
 
-DEFAULT_NAMESPACE = 'default'
+
 DEFAULT_PROMETHEUS_URL = 'http://localhost:9000'
 
 
@@ -39,10 +38,10 @@ class VMRecord:
     storage_record = attr.ib(default=None)
     image_id = attr.ib(default=None)
     cloud_type = attr.ib(default=None)
-    self.cloud_compute_service = attr.ib(default=None)
-    self.benchmark_type = attr.ib(default=None)
-    self.benchmark = attr.ib(default=None)
-    self.public_ip_count = attr.ib(default=0)
+    cloud_compute_service = attr.ib(default=None)
+    benchmark_type = attr.ib(default=None)
+    benchmark = attr.ib(default=None)
+    public_ip_count = attr.ib(default=0)
 
     def as_dict(self):
         return {
@@ -50,14 +49,14 @@ class VMRecord:
             'SiteName': self.site,
             'MachineName': self.machine,
             'LocalUserId': self.local_user_id,
-            'LocalGroupId': self.,
+            'LocalGroupId': self.local_group_id,
             'GlobalUserName': self.global_user_name,
             'FQAN': self.fqan,
-            'Status': self.,
+            'Status': self.status,
             'StartTime': self.start_time,
             'EndTime': self.end_time,
             'SuspendDuration': self.suspend_duration,
-            'WallDuration': self.,
+            'WallDuration': self.wall,
             'CpuDuration': self.cpu,
             'CpuCount': self.cpu_count,
             'NetworkType': self.network_type,
@@ -85,12 +84,16 @@ class VMRecord:
     def from_notebook(cls, notebook, **defaults):
         record = cls(global_user_name=notebook.username,
                      local_id=notebook.uid,
-                     cpu=notebook.cpu_time,
                      start_time=notebook.start,
                      **defaults)
-        if notebook.end and notebook.start:
-            record.end = notebook.end
-            record.wall = notebook.end - notebook.start
+        if notebook.start:
+            if notebook.end:
+                record.end = notebook.end
+                record.wall = notebook.end - notebook.start
+            else:
+                now = datetime.now().timestamp()
+                record.wall = now - notebook.start
+        return record
 
 
 def get_usage_stats(prometheus_url, namespace):
@@ -99,19 +102,34 @@ def get_usage_stats(prometheus_url, namespace):
     # Go back 6 hours
     # TODO(enolfc): what's the right interval to use?
     start = end - 6 * 3600
-    query_str = ("container_cpu_usage_seconds_total{{namespace='{0}',"
-                 "pod_name=~'^jupyter-.*',container_name='notebook'}}")
-    params = {'query': query_str.format(namespace),
-              # is this 4h safe enough?
-              'start': start, 'end': end, 'step': '4h'}
-    r = requests.get('{0}/api/v1/query_range'.format(prometheus_url), params=params)
+    metrics = [
+        ('network_outbound',
+         'container_network_transmit_bytes_total'),
+        ('network_inbound',
+         'container_network_receive_bytes_total'),
+        ('cpu',
+         'container_cpu_usage_seconds_total'),
+        ('memory',
+         'container_memory_max_usage_bytes'),
+    ]
     pods = {}
-    for result in r.json()['data']['result']:
-        # assuming this will be always in the same format
-        # not very reliable if you ask me ;)
-        name = result['metric']['name'].split('_')[-2]
-        # last known value
-        pods[name] = result['values'][-1][1]
+    for m, q in metrics:
+        query_str = ("{0}{{namespace='{1}',"
+                     "pod_name=~'^jupyter-.*',container_name='notebook'}}")
+        # TODO(enolfc): set the step to the right value according to interval
+        # above
+        params = {'query': query_str.format(q, namespace),
+                  'start': start, 'end': end, 'step': '4h'}
+        r = requests.get('{0}/api/v1/query_range'.format(prometheus_url),
+                         params=params)
+        for result in r.json()['data']['result']:
+            # assuming this will be always in the same format
+            # not very reliable if you ask me ;)
+            name = result['metric']['name'].split('_')[-2]
+            # last known value
+            pod_metrics = pods.get(name, {})
+            pod_metrics[m] = result['values'][-1][1]
+            pods[name] = pod_metrics
     return pods
 
 
@@ -121,8 +139,10 @@ def dump(prometheus_url, namespace, spool_dir, site_config={}):
     records = []
     processed_notebooks = []
     for notebook in Notebook.select().where(Notebook.processed == False):
-        notebook.cpu_time = pod_usage.get(notebook.uid, 0.0)
-        records.append(JobRecord.from_notebook(notebook).dump(), **site_config)
+        notebook_extra = pod_usage.get(notebook.uid, {})
+        notebook_extra.update(site_config)
+        r = VMRecord.from_notebook(notebook, **notebook_extra).dump()
+        records.append(r)
         if notebook.end:
             processed_notebooks.append(notebook)
     message = '\n'.join(['APEL-individual-job-message: v0.3',
@@ -140,8 +160,9 @@ def dump(prometheus_url, namespace, spool_dir, site_config={}):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     init_db()
-    namespace = os.environ.get('NAMESPACE', DEFAULT_NAMESPACE)
-    logging.debug('Watched namespace: %s', namespace)
+
+    namespace = get_k8s_namespace()
+    logging.debug('namespace: %s', namespace)
     prometheus_url = os.environ.get('PROMETHEUS_URL', DEFAULT_PROMETHEUS_URL)
     logging.debug('Prometheus server at %s', prometheus_url)
     site_config = dict(site=os.environ.get('SITENAME', ''),
@@ -149,16 +170,10 @@ def main():
                        fqan=os.environ.get('VO', 'access.egi.eu'),
                        cloud_type=os.environ.get('CLOUD_TYPE',
                                                  'EGI Notebooks'),
-                       cloud_compute_service=os.environ('SERVICE', ''))
-    dump(prometheus_url, namespace, '', site_config)
-    # and every 6 hours from now
-    # this could be just a Kubernetes cron job no?
-    schedule.every(6).minutes.do(dump, prometheus_url, namespace, '',
-                                 site_config)
-    while True:
-        schedule.run_pending()
-        # 5 minutes sleep, am I using the right tool here?
-        time.sleep(300)
+                       cloud_compute_service=os.environ.get('SERVICE', ''))
+    logging.debug('Site configuration: %s', site_config)
+    apel_dir = os.environ.get('APEL_SPOOL', '/tmp')
+    dump(prometheus_url, namespace, apel_dir, site_config)
 
 
 if __name__ == '__main__':
