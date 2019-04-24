@@ -10,4 +10,7 @@ data:
   PROMETHEUS_URL: {{ .Values.prometheus.url }}
   APEL_SPOOL: /accounting/ssm
   NOTEBOOK_DB: /accounting/notebooks.sqlite
-
+  SITENAME: {{ .Values.dumper.sitename }}
+  VO: {{ .Values.dumper.vo }}
+  CLOUD_TYPE: {{ .Values.dumper.cloudType }}
+  SERVICE: {{ .Values.dumper.service }}

@@ -25,6 +25,10 @@ dumper:
     repository: enolfc/accounting 
     tag: v0.0
     pullPolicy: IfNotPresent
+  sitename: "EGI-NOTEBOOKS"
+  vo: "vo.access.egi.eu"
+  cloudType: "EGI Notebooks"
+  service:
 
 ssm:
   schedule: "38 */8 * * *"
