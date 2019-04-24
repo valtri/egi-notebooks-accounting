@@ -1,0 +1,15 @@
+--
+apiVersion: v1
+kind: PersistentVolumeClaim 
+metadata:
+  name: {{ .Values.storage.pvcName }}
+  labels:
+    chart: {{ template "notebook-accounting.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.storage.size }} 

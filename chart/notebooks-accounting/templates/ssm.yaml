@@ -1,0 +1,52 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: notebooks-accounting-ssm
+  labels:
+    app: {{ template "notebook-accounting.name" . }}
+    chart: {{ template "notebook-accounting.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.ssm.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: ssm 
+            image: "{{ .Values.ssm.image.repository }}:{{ .Values.ssm.image.tag }}"
+            imagePullPolicy: {{ .Values.ssm.image.pullPolicy }}
+            command: ["ssmsend"]
+            volumeMounts:
+            - mountPath: /accounting
+              name: shared-accounting-vol
+            - mountPath: /etc/grid-security
+              name: hostcert
+            - mountPath: /etc/apel
+              name: config
+            resources:
+{{ toYaml .Values.resources | indent 14 }}
+          volumes:
+          - name: shared-accounting-vol
+            persistentVolumeClaim:
+              claimName: {{ .Values.storage.pvcName }} 
+          - name: hostcert 
+            secret:
+              secretName: notebooks-accounting-ssm-hostcerts 
+          - name: config
+            configMap:
+              name:  notebooks-accounting-ssm-config
+        {{- with .Values.nodeSelector }}
+          nodeSelector:
+{{ toYaml . | indent 12 }}
+        {{- end }}
+        {{- with .Values.affinity }}
+          affinity:
+{{ toYaml . | indent 12 }}
+        {{- end }}
+        {{- with .Values.tolerations }}
+          tolerations:
+{{ toYaml . | indent 12 }}
+        {{- end }}

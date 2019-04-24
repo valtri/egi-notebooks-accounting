@@ -1,0 +1,13 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: notebooks-accounting-service-config
+  labels:
+    chart: {{ template "notebook-accounting.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  PROMETHEUS_URL: {{ .Values.prometheus.url }}
+  APEL_SPOOL: /accounting/ssm
+  NOTEBOOK_DB: /accounting/notebooks.sqlite
+
