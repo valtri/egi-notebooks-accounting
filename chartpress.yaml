@@ -1,0 +1,11 @@
+charts:
+  - name: notebooks-accounting 
+    imagePrefix: eginotebooks/svc-
+    repo:
+      git: egi-foundation/egi-notebooks-chart
+      published: https://egi-foundation.github.io/egi-notebooks-chart
+
+    images:
+      accounting:
+        valuesPath: image
+        contextPath: .
