@@ -86,6 +86,7 @@ class VMRecord:
                      local_id=notebook.uid,
                      start_time=notebook.start,
                      end_time=notebook.end,
+                     machine='{0}-notebook'.format(notebook.username),
                      **defaults)
         if notebook.start:
             if notebook.end:
@@ -167,10 +168,8 @@ def main():
     prometheus_url = os.environ.get('PROMETHEUS_URL', DEFAULT_PROMETHEUS_URL)
     logging.debug('Prometheus server at %s', prometheus_url)
     site_config = dict(site=os.environ.get('SITENAME', ''),
-                       machine=os.environ.get('MACHINE', ''),
-                       fqan=os.environ.get('VO', 'access.egi.eu'),
-                       cloud_type=os.environ.get('CLOUD_TYPE',
-                                                 'EGI Notebooks'),
+                       fqan=os.environ.get('VO', ''),
+                       cloud_type=os.environ.get('CLOUD_TYPE', ''),
                        cloud_compute_service=os.environ.get('SERVICE', ''))
     logging.debug('Site configuration: %s', site_config)
     apel_dir = os.environ.get('APEL_SPOOL', '/tmp')
