@@ -1,12 +1,17 @@
-sudo: required
+language: python
+python:
+  - 3.6
+git:
+  depth: false
 services:
-- docker
+  - docker
 jobs:
   include:
   - stage: build chart and publish
+    install:
+    - pip3 install -r dev-requirements.txt
     script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    - pip3 install -r dev-requirements.txt
     - chartpress --push --publish-chart
 env:
   global:
