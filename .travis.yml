@@ -6,7 +6,7 @@ jobs:
   - stage: build chart and publish
     script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-r   - pip3 install -r dev-requirements.txt
+    - pip3 install -r dev-requirements.txt
     - chartpress --push --publish-chart
 env:
   global:
