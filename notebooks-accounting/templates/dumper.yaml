@@ -16,8 +16,8 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: dumper 
-            image: "{{ .Values.dumper.image.repository }}:{{ .Values.dumper.image.tag }}"
-            imagePullPolicy: {{ .Values.dumper.image.pullPolicy }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
             command: ["/usr/local/bin/egi-notebooks-dumper"]
             envFrom:
             - configMapRef:

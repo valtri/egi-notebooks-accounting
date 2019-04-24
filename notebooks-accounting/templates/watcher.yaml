@@ -24,8 +24,8 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}-watcher
-          image: "{{ .Values.watcher.image.repository }}:{{ .Values.watcher.image.tag }}"
-          imagePullPolicy: {{ .Values.watcher.image.pullPolicy }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/usr/local/bin/egi-notebooks-watcher"]
           envFrom:
           - configMapRef:

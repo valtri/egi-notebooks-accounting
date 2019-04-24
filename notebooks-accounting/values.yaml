@@ -12,26 +12,23 @@ storage:
   pvcName: shared-accounting-pvc
   size: 1Gi
 
+image:
+  repository: eginotebooks/svc-accounting
+  tag: '0.1.0-54e2e51'
+  pullPolicy: IfNotPresent
+
 watcher:
   replicaCount: 1
-  image:
-    repository: enolfc/accounting 
-    tag: v0.0
-    pullPolicy: IfNotPresent
 
 dumper:
-  schedule: "23 */6 * * *"
-  image:
-    repository: enolfc/accounting 
-    tag: v0.0
-    pullPolicy: IfNotPresent
-  sitename: "EGI-NOTEBOOKS"
-  vo: "vo.access.egi.eu"
-  cloudType: "EGI Notebooks"
+  schedule: 23 */6 * * *
+  sitename: EGI-NOTEBOOKS
+  vo: vo.access.egi.eu
+  cloudType: EGI Notebooks
   service:
 
 ssm:
-  schedule: "38 */8 * * *"
+  schedule: 38 */8 * * *
   image:
     repository: stfc/ssm
     tag: release-2.4.0
