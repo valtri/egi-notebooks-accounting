@@ -4,3 +4,4 @@ kubernetes
 peewee
 requests
 schedule
+urllib3==1.24
