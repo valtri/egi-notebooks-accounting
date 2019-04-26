@@ -17,7 +17,9 @@ jobs:
     - helm init --client-only
     script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    - chartpress --push --publish-chart
+    - TAG_OPT=""
+    - if [ "x$TRAVIS_TAG" != "x" ]; then TAG_OPT="--tag $TRAVIS_TAG"; fi
+    - chartpress --push --publish-chart $TAG_OPT --commit-range $TRAVIS_COMMIT_RANGE
 env:
   global:
   - secure: pJ4UyyLMiVu/+F2SCJ9icscfDXxrFpJDTr1FeqoMs66BR8vEGUpKBhG8DC2uoGtzGwqrfTpZftYR9qSLkz1OOUvyRmOs4eCB87wMD8HydAOb4mT7ymLiRXT/bpeSjiDeTZZ7KGNHZcTWrpDzlvGqwhA7NwKl8Q9wPbm/NvCr5V7FVPipfIGK90x9nZqyMkZGCQ7vUcuF9rM3DDGrJdl+8YghT35HSRmnNJmbLcq5kdb9KzgesEpnvGdfLKKwprYtR8N6Y7LXcmco8Ydu0UpxSrphKaTlKdl9924FCA+asHEXMC2JLqBpCTLf5v/Q8NVbn8R3XrA5xziRqss6Hgq/yvvkvncCTN6iXjV9kEY7TeLkEnKB160yiRF6KN1tXyynXXFC2N6iOr5ju8QvYlADRCoDaSfpSUwDGUgkv8MSLfP+pztJRzPfF4NzR2G/l+3Ll/ePS2TGpMmP1w/LhD07i+OzhGb/VFtOGjbONAsbSJXMSN/mNY5673U8WArHkWNvPZwVBthcI/LRPIE35KpUobuinRe7nJbUkN0e8P9XfOfinqtFREQclsGR04vt9Vl0zn/Hvj6zbwjodRAO7rSQShwbBVldPXLmI1p4Mtq4H8WDYiI/DaGG8WFKVHdOJw9paODfiezZSlVMKLz5yX87DyEZ1dFZbROns7lnxFOSIYY=
