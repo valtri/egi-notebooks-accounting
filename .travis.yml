@@ -17,11 +17,12 @@ jobs:
     - helm init --client-only
     script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    - TAG_OPT=""
-    - if [ "x$TRAVIS_TAG" != "x" ]; then TAG_OPT="--tag $TRAVIS_TAG"; fi
+    - CHARTPRESS_OPT=""
+    - if [ "x$TRAVIS_TAG" != "x" ]; then CHARTPRESS_OPT="$CHARTPRESS_OPT --tag $TRAVIS_TAG"; fi
     - echo $TAG_OPT
-    - echo $TRAVIS_COMMIT_RANGE
-    - chartpress $TAG_OPT --commit-range $TRAVIS_COMMIT_RANGE
+    - if [ "x$TRAVIS_COMMIT_RANGE" != "x" ]; then CHARTPRESS_OPT="$CHARTPRESS_OPT --commit-range $TRAVIS_COMMIT_RANGE"; fi
+    - echo $CHARTPRESS_OPT
+    - chartpress $CHARTPRESS_OPT
     # - chartpress --push --publish-chart $TAG_OPT --commit-range $TRAVIS_COMMIT_RANGE
 env:
   global:
