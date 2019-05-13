@@ -147,7 +147,7 @@ def dump(prometheus_url, namespace, spool_dir, site_config={}):
         if notebook.end:
             processed_notebooks.append(notebook)
     if records:
-        message = '\n'.join(['APEL-individual-job-message: v0.3',
+        message = '\n'.join(['APEL-individual-job-message: v0.4',
                              '\n%%\n'.join(records)])
         queue = QueueSimple.QueueSimple(spool_dir)
         queue.add(message)
