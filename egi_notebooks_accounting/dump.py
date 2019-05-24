@@ -144,6 +144,7 @@ def dump(prometheus_url, namespace, spool_dir, site_config={}):
         notebook_extra.update(site_config)
         r = VMRecord.from_notebook(notebook, **notebook_extra).dump()
         records.append(r)
+        notebook.record = r
         if notebook.end:
             processed_notebooks.append(notebook)
     if records:

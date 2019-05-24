@@ -17,6 +17,7 @@ class Notebook(peewee.Model):
     start = peewee.FloatField(null=True)
     end = peewee.FloatField(null=True)
     processed = peewee.BooleanField(default=False)
+    record = peewee.TextField(null=True)
 
     class Meta:
         database = db
