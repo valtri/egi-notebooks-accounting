@@ -53,24 +53,24 @@ class VMRecord:
             'GlobalUserName': self.global_user_name,
             'FQAN': self.fqan,
             'Status': self.status,
-            'StartTime': self.start_time,
-            'EndTime': self.end_time,
-            'SuspendDuration': self.suspend_duration,
-            'WallDuration': self.wall,
-            'CpuDuration': self.cpu,
-            'CpuCount': self.cpu_count,
+            'StartTime': int(self.start_time),
+            'EndTime': int(self.end_time),
+            'SuspendDuration': int(self.suspend_duration),
+            'WallDuration': int(self.wall),
+            'CpuDuration': int(self.cpu),
+            'CpuCount': int(self.cpu_count),
             'NetworkType': self.network_type,
-            'NetworkInbound': self.network_inbound,
-            'NetworkOutbound': self.network_outbound,
-            'Memory': self.memory,
-            'Disk': self.disk,
+            'NetworkInbound': int(self.network_inbound),
+            'NetworkOutbound': int(self.network_outbound)
+            'Memory': int(self.memory),
+            'Disk': int(self.disk),
             'StorageRecordId': self.storage_record,
             'ImageId': self.image_id,
             'CloudType': self.cloud_type,
             'CloudComputeService': self.cloud_compute_service,
             'BenchmarkType': self.benchmark_type,
             'Benchmark': self.benchmark,
-            'PublicIPCount': self.public_ip_count,
+            'PublicIPCount': int(self.public_ip_count)
         }
 
     def dump(self):
@@ -148,7 +148,7 @@ def dump(prometheus_url, namespace, spool_dir, site_config={}):
         if notebook.end:
             processed_notebooks.append(notebook)
     if records:
-        message = '\n'.join(['APEL-individual-job-message: v0.4',
+        message = '\n'.join(['APEL-cloud-message: v0.4',
                              '\n%%\n'.join(records)])
         queue = QueueSimple.QueueSimple(spool_dir)
         queue.add(message)
