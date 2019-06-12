@@ -61,7 +61,7 @@ class VMRecord:
             'CpuCount': int(self.cpu_count),
             'NetworkType': self.network_type,
             'NetworkInbound': int(self.network_inbound),
-            'NetworkOutbound': int(self.network_outbound)
+            'NetworkOutbound': int(self.network_outbound),
             'Memory': int(self.memory),
             'Disk': int(self.disk),
             'StorageRecordId': self.storage_record,
