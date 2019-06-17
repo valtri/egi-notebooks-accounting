@@ -91,9 +91,11 @@ class VMRecord:
         if notebook.start:
             if notebook.end:
                 record.wall = notebook.end - notebook.start
+                record.status = 'completed'
             else:
                 now = datetime.now().timestamp()
                 record.wall = now - notebook.start
+                record.status = 'started'
         return record
 
 
