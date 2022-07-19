@@ -1,42 +1,70 @@
-# Default values for notebook-accounting.
+# Default values for notebooks-accounting.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-rbac:
-  enabled: true
-
-prometheus:
-  url: http://prom-prometheus-server.default.svc.cluster.local
-
-storage:
-  pvcName: shared-accounting-pvc
-  size: 1Gi
-
-image:
-  repository: eginotebooks/svc-accounting
-  tag: '0.1.0-54e2e51'
-  pullPolicy: IfNotPresent
-
-watcher:
-  replicaCount: 1
-
-dumper:
+# Accounting parameters
+accounting:
+  # (empty value to disable accounting)
   schedule: 23 */6 * * *
   sitename: EGI-NOTEBOOKS
-  vo: vo.access.egi.eu
   cloudType: EGI Notebooks
   service:
 
+  # catchall FQAN for values not specified in the fqan mapping
+  default_fqan: vo.notebooks.egi.eu
+
+  # Pod dictionary key used for fqan mapping
+  # (primary_group, namespace, image_id, ...)
+  fqan_key: primary_group
+
+  #
+  # Mapping to get the result FQAN
+  #
+  # VO1: value1,value2,...
+  # VO2: value3,value4,...
+  # ...
+  #
+  # Values are taken from the pod according to the selected fqan_key.
+  #
+  fqan: {}
+
+# Prometheus endpoint
+prometheus:
+  url: "http://prometheus-server.prometheus.svc.cluster.local"
+
+# Permanent storage, mounted at '/accounting'
+storage:
+  pvcName: shared-accounting-pvc
+  size: 2Gi
+  # directory pool for APEL dumps (empty value to disable)
+  apelSpool: /accounting/ssm
+  # storage to local sqlite database (empty value to disable)
+  notebooksDb: /accounting/notebooks.db
+
+image:
+  repository: eginotebooks/svc-accounting
+  # pullPolicy:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# APEL sender parameters
 ssm:
+  # (empty value to disable)
   schedule: 38 */8 * * *
   image:
     repository: stfc/ssm
-    tag: release-2.4.0
+    tag: release-3.2.1
     pullPolicy: IfNotPresent
   hostcert:
   hostkey:
 
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
+podAnnotations: {}
+
+nodeSelector: {}
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -44,14 +72,8 @@ resources: {}
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
+  #   cpu: 100m
+  #   memory: 128Mi
   # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
+  #   cpu: 100m
+  #   memory: 128Mi

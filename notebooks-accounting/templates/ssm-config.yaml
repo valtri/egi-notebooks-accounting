@@ -1,24 +1,28 @@
+{{- if .Values.ssm.schedule }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: notebooks-accounting-ssm-config
   labels:
-    chart: {{ template "notebook-accounting.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "notebooks-accounting.labels" . | nindent 4 }}
 data:
   sender.cfg: |-
+    [sender]
+    # Either 'STOMP' for STOMP message brokers or 'AMS' for Argo Messaging Service
+    protocol: AMS
     ################################################################################
     # Required: broker configuration options
     #
     [broker]
     # The SSM will query a BDII to find brokers available.  These details are for the
     # EGI production broker network
-    bdii: ldap://lcg-bdii.cern.ch:2170
-    network: PROD
-    # OR (these details will only be used if the broker network settings aren't used)
-    #host: test-msg01.afroditi.hellasgrid.gr
-    #port: 6163
+    # bdii: ldap://lcg-bdii.cern.ch:2170
+    # network: PROD
+    # Alternatively, 'host' and 'port' may be set manually (with 'bdii' and
+    # 'network' commented out). This option must be used for AMS.
+    #host: msg-devel.argo.grnet.gr
+    host: msg.argo.grnet.gr
+    #port: 443
     # broker authentication.  If use_ssl is set, the certificates configured
     # in the mandatory [certificates] section will be used.
     use_ssl: false
@@ -35,13 +39,18 @@ data:
     # Messaging configuration.
     #
     [messaging]
+    # If using AMS this is the project that SSM will connect to. Ignored for STOMP.
+    ams_project: accounting
     # Queue to which SSM will send messages
-    destination: /queue/global.accounting.test.cloud.central
+    destination: eu-egi-cloud-accounting
+    # Supplied path type ('dirq', 'directory')
+    # path_type: dirq
     # Outgoing messages will be read and removed from this directory.
-    path: /accounting/ssm/
+    path: {{ .Values.accounting.apelSpool | default "/accounting/ssm" }}
     [logging]
     logfile: /var/log/apel/ssmsend.log
     # Available logging levels:
     # DEBUG, INFO, WARN, ERROR, CRITICAL
     level: DEBUG
     console: true
+{{- end }}

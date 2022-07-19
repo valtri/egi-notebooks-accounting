@@ -1,16 +1,51 @@
-kind: ConfigMap
 apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: notebooks-accounting-service-config
-  labels:
-    chart: {{ template "notebook-accounting.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: accounting
 data:
-  PROMETHEUS_URL: {{ .Values.prometheus.url }}
-  APEL_SPOOL: /accounting/ssm
-  NOTEBOOK_DB: /accounting/notebooks.sqlite
-  SITENAME: {{ .Values.dumper.sitename }}
-  VO: {{ .Values.dumper.vo }}
-  CLOUD_TYPE: {{ .Values.dumper.cloudType }}
-  SERVICE: {{ .Values.dumper.service }}
+  config.ini: |
+    [prometheus]
+    {{- if .Values.accounting.sitename }}
+    site={{ .Values.accounting.sitename }}
+    {{- else }}
+    # site=EGI-NOTEBOOKS
+    {{- end }}
+    {{- if .Values.accounting.cloudType }}
+    cloud_type={{ .Values.accounting.cloudType }}
+    {{- else }}
+    # cloud_type=EGI Notebooks
+    {{- end }}
+    {{- if .Values.accounting.service }}
+    cloud_compute_service={{ .Values.accounting.service }}
+    {{- else }}
+    # cloud_compute_service=
+    {{- end }}
+
+    {{- if .Values.prometheus.url }}
+    url={{ .Values.prometheus.url }}
+    {{- else }}
+    # url=http://localhost:8080
+    {{- end }}
+    # user=
+    # password=
+    # verbose=0
+    # verify=0
+    {{- if .Values.storage.apelSpool }}
+    apel_spool={{ .Values.storage.apelSpool }}
+    {{- else }}
+    # apel_spool=
+    {{- end }}
+    {{- if .Values.storage.notebooksDb }}
+    notebooks_db={{ .Values.storage.notebooksDb }}
+    {{- else }}
+    # notebooks_db=
+    {{- end }}
+
+    # filter=pod=~'jupyter-.*'
+    range=24h
+
+    # mapping from k8s namespace to VO
+    [VO]
+    {{- range $key, $val := .Values.accounting.fqan }}
+    {{ $key }}={{ $val }}
+    {{- end }}
