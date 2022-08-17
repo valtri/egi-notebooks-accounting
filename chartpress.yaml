@@ -1,9 +1,9 @@
 charts:
   - name: notebooks-accounting
-    imagePrefix: eginotebooks/svc-
+    imagePrefix: valtri/svc-
     repo:
-      git: egi-federation/egi-notebooks-chart
-      published: https://egi-federation.github.io/egi-notebooks-chart
+      git: https://github.com/valtri/egi-notebooks-accounting
+      published: https://valtri.github.io/egi-notebooks-accounting
 
     images:
       accounting:
