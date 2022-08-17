@@ -1,5 +1,8 @@
 name: Release Charts
 
+on:
+  push:
+
 jobs:
   release:
     if: github.event_name != 'pull_request'
