@@ -59,7 +59,7 @@ class VM(BaseModel):
             'GlobalUserName': self.global_user_name,
             'FQAN': self.fqan,
             'Status': self.status,
-            'StartTime': int(self.start_time.timestamp()),
+            'StartTime': None,
             'EndTime': None,
             'SuspendDuration': int(self.suspend_duration),
             'WallDuration': int(self.wall),
@@ -78,6 +78,8 @@ class VM(BaseModel):
             'Benchmark': self.benchmark,
             'PublicIPCount': int(self.public_ip_count)
         }
+        if self.start_time:
+            r['StartTime'] = int(self.start_time.timestamp())
         if self.end_time:
             r['EndTime'] = int(self.end_time.timestamp())
         return r
