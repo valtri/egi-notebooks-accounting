@@ -1,15 +1,13 @@
 ---
 apiVersion: v1
-kind: PersistentVolumeClaim 
+kind: PersistentVolumeClaim
 metadata:
   name: {{ .Values.storage.pvcName }}
   labels:
-    chart: {{ template "notebook-accounting.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "notebooks-accounting.labels" . | nindent 4 }}
 spec:
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   resources:
     requests:
-      storage: {{ .Values.storage.size }} 
+      storage: {{ .Values.storage.size }}

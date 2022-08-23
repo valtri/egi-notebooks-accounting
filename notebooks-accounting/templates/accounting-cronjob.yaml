@@ -1,0 +1,43 @@
+{{- if .Values.accounting.schedule }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "notebooks-accounting.fullname" . }}
+  labels:
+    {{- include "notebooks-accounting.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.accounting.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              {{- with .Values.imagePullSecrets }}
+              imagePullSecrets:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              command: ["egi-notebooks-accounting-dump", "-c", "/etc/egi-notebooks-accounting/config.ini"]
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              volumeMounts:
+                - name: accounting-config
+                  mountPath: /etc/egi-notebooks-accounting
+                  readOnly: true
+                - mountPath: /accounting
+                  name: shared-accounting-vol
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumes:
+            - name: accounting-config
+              configMap:
+                name: accounting
+            - name: shared-accounting-vol
+              persistentVolumeClaim:
+                claimName: {{ .Values.storage.pvcName }}
+{{- end }}
