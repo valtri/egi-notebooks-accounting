@@ -28,7 +28,7 @@ jobs:
 
       - name: Install Helm
         run: |
-          curl -ssL https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz | tar -xz -C . --strip-components 1 linux-amd64/helm
+          curl -ssL https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz | tar -xz -C . --strip-components 1 linux-amd64/helm
           sudo install -m 0755 -o root -g root helm /usr/local/bin/
 
       - name: Install Python depedencies
