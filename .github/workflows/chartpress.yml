@@ -51,5 +51,4 @@ jobs:
       - name: Run chartpress
         run: |
           REMOTE_ORIGIN="https://x-access-token:${{ github.token }}@$(git remote get-url origin | sed 's,^[^/]*//,,')"; sed -i chartpress.yaml -e "s,git:.*,git: $REMOTE_ORIGIN,"
-          cat chartpress.yaml
           chartpress --push --publish-chart
