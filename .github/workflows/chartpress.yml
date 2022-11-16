@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - ci2
+    tags:
+      - "**"
 
 jobs:
   release:
