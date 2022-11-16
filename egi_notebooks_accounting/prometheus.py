@@ -49,16 +49,17 @@ class Prometheus:
         self.url = url + 'api/v1'
         user = config.get('user')
         password = config.get('password')
-        self.auth = HTTPBasicAuth(user, password)
-        self.headers = Prometheus.DEFAULT_HEADERS
-        self.verify = os.environ.get('SSL_VERIFY', config.get('verify', 1))
-        if self.verify != '1' and self.verify != 'True':
-            self.verify = 0
-        if not self.verify:
+        self.session = requests.Session()
+        self.session.auth = HTTPBasicAuth(user, password)
+        self.session.headers.update(Prometheus.DEFAULT_HEADERS)
+        verify = os.environ.get('SSL_VERIFY', config.get('verify', 1))
+        verify = not (verify != '1' and verify != 'True')
+        if not verify:
             urllib3.disable_warnings(InsecureRequestWarning)
+        self.session.verify = verify
         log('Site %s' % VM.site)
         log('URL %s' % self.url)
-        log('verify %s' % self.verify)
+        log('verify %s' % verify)
         self.pods = dict()
 
     def handle_error(self, response):
@@ -67,8 +68,7 @@ class Prometheus:
     def get(self, rel_url):
         """REST GET request."""
         url = self.url + rel_url
-        response = requests.get(url, auth=self.auth, verify=self.verify,
-                                headers=self.headers)
+        response = self.session.get(url)
         self.handle_error(response)
         return response
 
@@ -76,10 +76,8 @@ class Prometheus:
         """REST POST request."""
         url = self.url + rel_url
         log('POST %s' % data)
-        response = requests.post(url, data=data, auth=self.auth,
-                                 verify=self.verify,
-                                 headers=dict(list(self.headers.items()) +
-                                              list(Prometheus.DEFAULT_HEADERS_MIME.items())))
+        response = self.session.post(url, data=data,
+                                     headers=Prometheus.DEFAULT_HEADERS_MIME)
         self.handle_error(response)
         return response
 
