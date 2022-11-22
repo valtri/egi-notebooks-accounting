@@ -20,7 +20,7 @@ jobs:
       - name: Run Super-Linter
         uses: github/super-linter@v4
         env:
-          DEFAULT_BRANCH: master
+          DEFAULT_BRANCH: ci3
           FILTER_REGEX_EXCLUDE: notebooks-accounting/templates/.*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Fail on errors
