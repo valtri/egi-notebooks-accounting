@@ -2,7 +2,7 @@
 
 EGI Notebooks accounting tools.
 
-# Usage
+## Required settings
 
 See *notebooks-accounting/values.yaml* for Helm package values.
 

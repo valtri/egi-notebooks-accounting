@@ -1,0 +1,32 @@
+---
+name: Lint
+
+on: [pull_request, push]
+
+jobs:
+  super-lint:
+    name: Lint with Super-Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          # Full git history needed to get proper list of changed files
+          fetch-depth: 0
+
+      # Runs the Super-Linter action
+      - name: Run Super-Linter
+        uses: github/super-linter@v4
+        env:
+          DEFAULT_BRANCH: master
+          FILTER_REGEX_EXCLUDE: notebooks-accounting/templates/.*
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Fail on errors
+          DISABLE_ERRORS: false
+          # JSCPD is failing in the symlink, so avoiding it
+          VALIDATE_JSCPD: false
+          # Need to deactivate this one as it gets
+          # confused with the helm templating
+          VALIDATE_KUBERNETES_KUBEVAL: false

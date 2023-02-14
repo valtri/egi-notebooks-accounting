@@ -1,3 +1,4 @@
+---
 {{- if .Values.ssm.schedule }}
 kind: ConfigMap
 apiVersion: v1
