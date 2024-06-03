@@ -9,4 +9,4 @@ charts:
     images:
       accounting:
         valuesPath: image
-        contextPath: .
+        contextPath: accounting
