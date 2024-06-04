@@ -1,3 +1,5 @@
 dirq
 peewee
 requests
+# avoid PEP 517 error
+setuptools==58.2.0
