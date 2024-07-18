@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "egi_notebooks_accounting"
+description = "EGI Notebooks accounting"
+readme = "README.md"
+authors = [
+  {name = "František Dvořák", email = "valtri@civ.zcu.cz"},
+  {name = "Enol Fernández", email = "enol.fernandez@egi.eu"},
+]
+dynamic = ["version"]
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: System Administrators",
+  "Topic :: System :: Monitoring",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "peewee",
+  "requests",
+  "dirq",
+]
+
+[project.scripts]
+egi-notebooks-accounting-dump = "egi_notebooks_accounting.pods:main"
+egi-notebooks-eosc-accounting = "egi_notebooks_accounting.eosc:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "egi_notebooks_accounting.__version__"}
