@@ -43,6 +43,7 @@ class VM(BaseModel):
     benchmark_type = CharField(null=True)
     benchmark = CharField(null=True)
     public_ip_count = IntegerField(default=0, null=True)
+    flavor = CharField(null=True)
 
     def __init__(self):
         super().__init__()

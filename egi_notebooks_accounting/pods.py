@@ -9,7 +9,7 @@ from typing import Dict, List
 import peewee
 from dirq import QueueSimple
 
-from .model import VM, db, db_init
+from .model import VM, db_init
 from .prometheus import Prometheus
 
 CONFIG = "prometheus"
@@ -73,8 +73,9 @@ def main():
                 fqans[value] = vo
     logging.debug("FQAN: %s", fqans)
 
+    db = None
     if db_file:
-        db_init(db_file)
+        db = db_init(db_file)
         db.connect()
     prom = Prometheus(parser)
     tnow = time.time()
@@ -145,6 +146,7 @@ def main():
             continue
         pod.global_user_name = metric.get("annotation_hub_jupyter_org_username", None)
         pod.primary_group = metric.get("annotation_egi_eu_primary_group", None)
+        pod.flavor = metric.get("annotation_egi_eu_flavor", None)
     # ==== IMAGE ====
     data["query"] = (
         "last_over_time(kube_pod_container_info{"
@@ -194,28 +196,27 @@ def main():
         logging.debug(
             "fqan evaluation: pod %s, fqan_value %s", pod.local_id, fqan_value
         )
-        for (value, vo) in fqans.items():
-            if fqan_value == value:
-                pod.fqan = vo
-                break
+        if fqan_value in fqans:
+            pod.fqan = vo
+        elif fqan_value:
+            # just use the value that's in the pod
+            pod.fqan = fqan_value
 
     if prom.pods:
-        message = "APEL-cloud-message: v0.4\n" + "\n%%\n".join(
-            [pod.dump() for (uid, pod) in prom.pods.items()]
-        )
         if spool_dir:
             queue = QueueSimple.QueueSimple(spool_dir)
+            message = "APEL-cloud-message: v0.4\n" + "\n%%\n".join(
+                [pod.dump() for (uid, pod) in prom.pods.items()]
+            )
             queue.add(message)
             logging.debug("Dumped %d records to spool dir", len(prom.pods))
-        else:
-            print(message)
-        if db_file:
+        if db:
             for (uid, pod) in prom.pods.items():
                 try:
                     pod.save(force_insert=True)
                 except peewee.IntegrityError:
                     pod.save()
-    if db_file:
+    if db:
         db.close()
 
 
