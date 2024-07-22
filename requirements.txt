@@ -1,4 +1,4 @@
-peewee
-requests
 dirq
-
+peewee
+python-dateutil
+requests

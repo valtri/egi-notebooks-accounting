@@ -53,6 +53,7 @@ import time
 from configparser import ConfigParser
 from datetime import date, datetime, timedelta
 
+import dateutil.parser
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -111,6 +112,8 @@ def main():
     parser.add_argument(
         "--dry-run", help="Do not actually send data, just report", action="store_true"
     )
+    parser.add_argument("--from-date", help="Start date to report from")
+    parser.add_argument("--to-date", help="End date to report to")
     args = parser.parse_args()
 
     parser = ConfigParser()
@@ -141,15 +144,22 @@ def main():
 
     # ==== queries ====
     # TODO: keep the last reported day as state, do report from there
-    report_day = date.today() - timedelta(days=1)
-    from_date = datetime(report_day.year, report_day.month, report_day.day, 0, 0)
-    to_date = datetime(report_day.year, report_day.month, report_day.day, 23, 59)
+    if args.from_date:
+        from_date = dateutil.parser.parse(args.from_date)
+    else:
+        report_day = date.today() - timedelta(days=1)
+        from_date = datetime(report_day.year, report_day.month, report_day.day, 0, 0)
+    if args.to_date:
+        to_date = dateutil.parser.parse(args.to_date)
+    else:
+        to_date = from_date + timedelta(hours=23, minutes=59)
+    logging.debug(f"Reporting from {from_date} to {to_date}")
     metrics = {}
     # pods ending in between the reporting times
-    for pod in VM.select().where((VM.end_time >= from_date) | (VM.end_time <= to_date)):
+    for pod in VM.select().where((VM.end_time >= from_date) & (VM.end_time <= to_date)):
         update_pod_metric(pod, metrics, flavor_config)
     # pods starting but not finished between the reporting times
-    for pod in VM.select().where((VM.start_time >= from_date) | (VM.end_time == None)):
+    for pod in VM.select().where((VM.start_time >= from_date) & (VM.end_time == None)):
         update_pod_metric(pod, metrics, flavor_config)
 
     # ==== push this to EOSC accounting ====
