@@ -3,6 +3,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+debug: false
+
 # Accounting parameters
 accounting:
   # (empty value to disable accounting)

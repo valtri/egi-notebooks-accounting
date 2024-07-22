@@ -21,7 +21,9 @@ data:
     {{- else }}
     # cloud_compute_service=
     {{- end }}
-    # verbose=0
+    {{- if.Values.debug }}
+    verbose=1
+    {{- end }}
     {{- if .Values.storage.apelSpool }}
     apel_spool={{ .Values.storage.apelSpool }}
     {{- else }}
