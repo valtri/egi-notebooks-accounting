@@ -15,7 +15,6 @@ class VM(BaseModel):
     site = "EGI-NOTEBOOKS"
     cloud_type = "EGI Notebooks"
     cloud_compute_service = None
-    default_vo = "vo.notebooks.egi.eu"
 
     namespace = CharField()
     primary_group = None
@@ -44,10 +43,6 @@ class VM(BaseModel):
     benchmark = CharField(null=True)
     public_ip_count = IntegerField(default=0, null=True)
     flavor = CharField(null=True)
-
-    def __init__(self):
-        super().__init__()
-        self.default_vo = VM.default_vo
 
     def as_dict(self):
         r = {
