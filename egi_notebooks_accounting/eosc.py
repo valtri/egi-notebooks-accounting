@@ -158,9 +158,7 @@ def main():
     for pod in VM.select().where((VM.end_time >= from_date) & (VM.end_time <= to_date)):
         update_pod_metric(pod, metrics, flavor_config)
     # pods starting but not finished between the reporting times
-    for pod in VM.select().where(
-        (VM.start_time >= from_date) & (VM.end_time is not None)
-    ):
+    for pod in VM.select().where((VM.start_time >= from_date) & (VM.end_time is None)):
         update_pod_metric(pod, metrics, flavor_config)
 
     # ==== push this to EOSC accounting ====
