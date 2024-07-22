@@ -1,5 +1,3 @@
-#! /usr/bin/python3
-
 import peewee
 from peewee import CharField, DateTimeField, FloatField, IntegerField, UUIDField
 
