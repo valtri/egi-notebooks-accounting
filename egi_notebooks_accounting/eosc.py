@@ -82,7 +82,7 @@ def get_access_token(token_url, client_id, client_secret):
 
 
 def push_metric(accounting_url, token, installation, metric_data):
-    self.log.debug(f"Pushing to accounting")
+    logging.debug(f"Pushing to accounting")
     response = requests.post(
         f"{accounting_url}/accounting-system/installations/{installation}/metrics",
         headers={"Authorization": f"Bearer {token}"},
