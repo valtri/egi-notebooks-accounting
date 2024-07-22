@@ -60,15 +60,12 @@ def main():
     VM.cloud_compute_service = os.environ.get(
         "SERVICE", config.get("cloud_compute_service", VM.cloud_compute_service)
     )
-    VM.default_vo = os.environ.get(
-        "DEFAULT_VO", config.get("default_vo", VM.default_vo)
-    )
     db_file = os.environ.get("NOTEBOOKS_DB", config.get("notebooks_db", None))
 
     fqans = dict(DEFAULT_FQANS)
     if "VO" in parser:
         config = parser["VO"]
-        for (vo, values) in config.items():
+        for vo, values in config.items():
             for value in values.split(","):
                 fqans[value] = vo
     logging.debug("FQAN: %s", fqans)
@@ -170,7 +167,7 @@ def main():
         if "image" in metric:
             pod.image_id = metric["image"]
     # ==== resource usage queries ====
-    for (field, query) in usage_queries.items():
+    for field, query in usage_queries.items():
         data["query"] = query
         response = prom.query(data)
         for item in response["data"]["result"]:
@@ -211,7 +208,7 @@ def main():
             queue.add(message)
             logging.debug("Dumped %d records to spool dir", len(prom.pods))
         if db:
-            for (uid, pod) in prom.pods.items():
+            for uid, pod in prom.pods.items():
                 try:
                     pod.save(force_insert=True)
                 except peewee.IntegrityError:
