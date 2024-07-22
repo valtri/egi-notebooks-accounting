@@ -32,11 +32,10 @@ Configuration:
 notebooks_db=<notebooks db file>
 
 [eosc]
-token_url=https://aai-demo.eosc-portal.eu/auth/realms/core/protocol/openid-connect/token
-accounting_url=https://accounting.devel.argo.grnet.gr
-refresh_token=
-client_secret=
-client_id=
+token_url=https://proxy.staging.eosc-federation.eu/OIDC/token
+client_secret=<client secret>
+client_id=<client_id>
+accounting_url=https://api.acc.staging.eosc.grnet.gr
 installaion_id=<id of the installation to report accounting for>
 
 [eosc.flavors]
@@ -52,7 +51,7 @@ import logging
 import os
 import time
 from configparser import ConfigParser
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -64,9 +63,9 @@ EOSC_CONFIG = "eosc"
 FLAVOR_CONFIG = "eosc.flavors"
 DEFAULT_CONFIG_FILE = "config.ini"
 DEFAULT_TOKEN_URL = (
-    "https://aai-demo.eosc-portal.eu/auth/realms/core/protocol/openid-connect/token"
+    "https://proxy.staging.eosc-federation.eu/OIDC/token"
 )
-DEFAULT_ACCOUNTING_URL = "https://accounting.devel.argo.grnet.gr"
+DEFAULT_ACCOUNTING_URL = "https://api.acc.staging.eosc.grnet.gr"
 
 
 def get_access_token(token_url, client_id, client_secret):
@@ -82,30 +81,12 @@ def get_access_token(token_url, client_id, client_secret):
     )
     return response.json()["access_token"]
 
-
-def push_metric(
-    accounting_url,
-    token,
-    installation,
-    metric,
-    period_start,
-    period_end,
-    user,
-    group,
-    value,
-):
-    data = {
-        "metric_definition_id": metric,
-        "time_period_start": period_start,
-        "time_period_end": period_end,
-        "user": user,
-        "group": group,
-        "value": value,
-    }
+def push_metric(accounting_url, token, installation, metric_data):
+    self.log.debug(f"Pushing to accounting")
     response = requests.post(
         f"{accounting_url}/accounting-system/installations/{installation}/metrics",
         headers={"Authorization": f"Bearer {token}"},
-        data=json.dumps(data),
+        data=json.dumps(metric_data),
     )
     response.raise_for_status()
 
@@ -128,6 +109,9 @@ def main():
     parser.add_argument(
         "-c", "--config", help="config file", default=DEFAULT_CONFIG_FILE
     )
+    parser.add_argument(
+        "--dry-run", help="Do not actually send data, just report", action='store_true'
+    )
     args = parser.parse_args()
 
     parser = ConfigParser()
@@ -147,9 +131,6 @@ def main():
     token_url = os.environ.get(
         "TOKEN_URL", eosc_config.get("token_url", DEFAULT_TOKEN_URL)
     )
-    refresh_token = os.environ.get(
-        "REFRESH_TOKEN", eosc_config.get("refresh_token", "")
-    )
     client_id = os.environ.get("CLIENT_ID", eosc_config.get("client_id", ""))
     client_secret = os.environ.get(
         "CLIENT_SECRET", eosc_config.get("client_secret", "")
@@ -160,8 +141,10 @@ def main():
     installation = eosc_config.get("installation_id", "")
 
     # ==== queries ====
-    to_date = datetime.now()
-    from_date = to_date - timedelta(days=1)
+    # TODO: keep the last reported day as state, do report from there
+    report_day = date.today() - timedelta(days=1)
+    from_date = datetime(report_day.year, report_day.month, report_day.day, 0, 0)
+    to_date = datetime(report_day.year, report_day.month, report_day.day, 23, 59)
     metrics = {}
     # pods ending in between the reporting times
     for pod in VM.select().where((VM.end_time >= from_date) | (VM.end_time <= to_date)):
@@ -171,23 +154,25 @@ def main():
         update_pod_metric(pod, metrics, flavor_config)
 
     # ==== push this to EOSC accounting ====
-    token = get_access_token(token_url, client_id, client_secret)
-    period_start = (from_date.strftime("%Y-%m-%dT%H:%M:%SZ"),)
-    period_end = (to_date.strftime("%Y-%m-%dT%H:%M:%SZ"),)
+    if not args.dry_run:
+        token = get_access_token(token_url, client_id, client_secret)
+    period_start = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+    period_end = to_date.strftime("%Y-%m-%dT%H:%M:%SZ")
     for (user, group), flavors in metrics.items():
         for metric_key, value in flavors.items():
-            print(metric_key, value)
-            push_metric(
-                accounting_url,
-                token,
-                installation,
-                metric_key,
-                period_start,
-                period_end,
-                user,
-                group,
-                value,
-            )
+            metric_data = {
+                "metric_definition_id": metric_key,
+                "time_period_start": period_start,
+                "time_period_end": period_end,
+                "user": user,
+                "group": group,
+                "value": value,
+            }
+            logging.debug(f"Sending metric {metric_data} to accounting")
+            if args.dry_run:
+                logging.debug("Dry run, not sending")
+            else:
+                push_metric(accounting_url, token, installation, metric_data)
 
 
 if __name__ == "__main__":
