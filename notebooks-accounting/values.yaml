@@ -38,7 +38,7 @@ storage:
   pvcName: shared-accounting-pvc
   size: 2Gi
   # directory pool for APEL dumps (empty value to disable)
-  apelSpool: /accounting/ssm
+  apelSpool:
   # storage to local sqlite database (empty value to disable)
   notebooksDb: /accounting/notebooks.db
 
@@ -51,21 +51,19 @@ image:
 # EOSC accounting paramters
 eosc:
   # (empty value to disable)
-  schedule: 23 3 * * *
+  schedule: 42 3 * * *
   # configuration for the EOSC accounting
   tokenUrl:
-  refreshToken:
   clientId:
   clientSecret:
-  argoUrl:
+  accountingUrl:
   installationId:
-  usersMetric:
-  sessionsMetric:
+  flavorMetrics: {}
 
 # APEL sender parameters
 ssm:
   # (empty value to disable)
-  schedule: 38 */8 * * *
+  schedule:
   image:
     repository: stfc/ssm
     tag: release-3.2.1
