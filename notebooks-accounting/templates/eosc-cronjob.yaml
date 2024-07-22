@@ -28,6 +28,8 @@ spec:
                 - name: accounting-config
                   mountPath: /etc/egi-notebooks-accounting
                   readOnly: true
+                - mountPath: /accounting
+                  name: shared-accounting-vol
         {{- with .Values.nodeSelector }}
           nodeSelector:
 {{ toYaml . | indent 12 }}
@@ -44,4 +46,7 @@ spec:
             - name: accounting-config
               configMap:
                 name: accounting
+            - name: shared-accounting-vol
+              persistentVolumeClaim:
+                claimName: {{ .Values.storage.pvcName }}
 {{- end }}
