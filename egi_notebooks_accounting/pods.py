@@ -12,7 +12,8 @@ from dirq import QueueSimple
 from .model import VM, db_init
 from .prometheus import Prometheus
 
-CONFIG = "prometheus"
+CONFIG = "default"
+PROM_CONFIG = "prometheus"
 DEFAULT_CONFIG_FILE = "config.ini"
 DEFAULT_FILTER = "pod=~'jupyter-.*'"
 DEFAULT_FQANS: Dict[str, List[str]] = {}
@@ -37,9 +38,11 @@ def main():
     verbose = logging.DEBUG if verbose == "1" else logging.INFO
     logging.basicConfig(level=verbose)
     fqan_key = os.environ.get("FQAN_KEY", config.get("fqan_key", DEFAULT_FQAN_KEY))
-    flt = os.environ.get("FILTER", config.get("filter", DEFAULT_FILTER))
-    rng = os.environ.get("RANGE", config.get("range", DEFAULT_RANGE))
     spool_dir = os.environ.get("APEL_SPOOL", config.get("apel_spool"))
+
+    prom_config = parser[PROM_CONFIG] if PROM_CONFIG in parser else {}
+    flt = os.environ.get("FILTER", prom_config.get("filter", DEFAULT_FILTER))
+    rng = os.environ.get("RANGE", prom_config.get("range", DEFAULT_RANGE))
     usage_queries = {
         "cpu_duration": "sum by (name) (max_over_time(container_cpu_usage_seconds_total{%s}[%s]))"
         % (flt, rng),
@@ -64,8 +67,8 @@ def main():
 
     fqans = dict(DEFAULT_FQANS)
     if "VO" in parser:
-        config = parser["VO"]
-        for vo, values in config.items():
+        vo_config = parser["VO"]
+        for vo, values in vo_config.items():
             for value in values.split(","):
                 fqans[value] = vo
     logging.debug("FQAN: %s", fqans)

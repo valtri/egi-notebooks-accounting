@@ -28,7 +28,7 @@ This code goes to the accounting db and aggregates the information for the last 
 and pushes it to the EOSC Accounting
 
 Configuration:
-[prometheus]
+[default]
 notebooks_db=<notebooks db file>
 
 [eosc]
@@ -58,13 +58,11 @@ from requests.auth import HTTPBasicAuth
 
 from .model import db_init, VM
 
-PROM_CONFIG = "prometheus"
+CONFIG = "default"
 EOSC_CONFIG = "eosc"
 FLAVOR_CONFIG = "eosc.flavors"
 DEFAULT_CONFIG_FILE = "config.ini"
-DEFAULT_TOKEN_URL = (
-    "https://proxy.staging.eosc-federation.eu/OIDC/token"
-)
+DEFAULT_TOKEN_URL = "https://proxy.staging.eosc-federation.eu/OIDC/token"
 DEFAULT_ACCOUNTING_URL = "https://api.acc.staging.eosc.grnet.gr"
 
 
@@ -80,6 +78,7 @@ def get_access_token(token_url, client_id, client_secret):
         },
     )
     return response.json()["access_token"]
+
 
 def push_metric(accounting_url, token, installation, metric_data):
     self.log.debug(f"Pushing to accounting")
@@ -110,19 +109,19 @@ def main():
         "-c", "--config", help="config file", default=DEFAULT_CONFIG_FILE
     )
     parser.add_argument(
-        "--dry-run", help="Do not actually send data, just report", action='store_true'
+        "--dry-run", help="Do not actually send data, just report", action="store_true"
     )
     args = parser.parse_args()
 
     parser = ConfigParser()
     parser.read(args.config)
-    prom_config = parser[PROM_CONFIG] if PROM_CONFIG in parser else {}
+    config = parser[CONFIG] if CONFIG in parser else {}
     eosc_config = parser[EOSC_CONFIG] if EOSC_CONFIG in parser else {}
     flavor_config = parser[FLAVOR_CONFIG] if FLAVOR_CONFIG in parser else {}
-    db_file = os.environ.get("NOTEBOOKS_DB", prom_config.get("notebooks_db", None))
+    db_file = os.environ.get("NOTEBOOKS_DB", config.get("notebooks_db", None))
     db_init(db_file)
 
-    verbose = os.environ.get("VERBOSE", prom_config.get("verbose", 0))
+    verbose = os.environ.get("VERBOSE", config.get("verbose", 0))
     verbose = logging.DEBUG if verbose == "1" else logging.INFO
     logging.basicConfig(level=verbose)
 
