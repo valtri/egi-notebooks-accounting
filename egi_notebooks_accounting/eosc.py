@@ -49,7 +49,6 @@ import argparse
 import json
 import logging
 import os
-import time
 from configparser import ConfigParser
 from datetime import date, datetime, timedelta
 
@@ -57,7 +56,7 @@ import dateutil.parser
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .model import db_init, VM
+from .model import VM, db_init
 
 CONFIG = "default"
 EOSC_CONFIG = "eosc"
@@ -82,7 +81,7 @@ def get_access_token(token_url, client_id, client_secret):
 
 
 def push_metric(accounting_url, token, installation, metric_data):
-    logging.debug(f"Pushing to accounting")
+    logging.debug(f"Pushing to accounting - {installation}")
     response = requests.post(
         f"{accounting_url}/accounting-system/installations/{installation}/metrics",
         headers={"Authorization": f"Bearer {token}"},
@@ -163,7 +162,9 @@ def main():
         update_pod_metric(pod, metrics, flavor_config)
 
     # ==== push this to EOSC accounting ====
-    if not args.dry_run:
+    if args.dry_run:
+        logging.debug("Not getting credentials, dry-run")
+    else:
         token = get_access_token(token_url, client_id, client_secret)
     period_start = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
     period_end = to_date.strftime("%Y-%m-%dT%H:%M:%SZ")
