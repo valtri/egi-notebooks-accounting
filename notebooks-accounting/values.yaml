@@ -43,6 +43,8 @@ storage:
   apelSpool:
   # storage to local sqlite database (empty value to disable)
   notebooksDb: /accounting/notebooks.db
+  # timestamp file (empty value to disable)
+  timestamp: /accounting/eosc-timestamp
 
 image:
   repository: eginotebooks/svc-accounting
