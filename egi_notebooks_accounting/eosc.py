@@ -141,7 +141,14 @@ def get_from_to_dates(args, timestamp_file):
 
 
 def generate_day_metrics(
-    period_start, period_end, accounting_url, token, flavor_config, timestamp_file, installation, dry_run
+    period_start,
+    period_end,
+    accounting_url,
+    token,
+    flavor_config,
+    timestamp_file,
+    installation,
+    dry_run,
 ):
     logging.info(f"Generate metrics from {period_start} to {period_end}")
     metrics = {}
@@ -236,7 +243,14 @@ def main():
     while period_start <= to_date:
         period_end = period_start + timedelta(hours=23, minutes=59)
         generate_day_metrics(
-            period_start, period_end, accounting_url, token, flavor_config, timestamp_file, installation, args.dry_run
+            period_start,
+            period_end,
+            accounting_url,
+            token,
+            flavor_config,
+            timestamp_file,
+            installation,
+            args.dry_run,
         )
         period_start = period_end + timedelta(minutes=1)
 
