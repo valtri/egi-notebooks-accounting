@@ -184,6 +184,7 @@ def generate_day_metrics(
             with open(timestamp_file, "w+") as tsf:
                 tsf.write(period_end.strftime("%Y-%m-%dT%H:%M:%SZ"))
         except OSError as e:
+            e = str(e)
             logging.debug("Failed to write timestamp file '{timestamp_file}': {e}")
 
 
