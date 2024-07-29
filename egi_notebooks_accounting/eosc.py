@@ -102,7 +102,7 @@ def update_pod_metric(pod, metrics, flavor_config):
     user_metrics = metrics.get((user, group), {})
     flavor_metric = flavor_config[pod.flavor]
     flavor_metric_value = user_metrics.get(flavor_metric, 0)
-    user_metrics[flavor_metric] = flavor_metric_value + pod.wall
+    user_metrics[flavor_metric] = flavor_metric_value + (pod.wall / (60 * 60))
     metrics[(user, group)] = user_metrics
 
 
