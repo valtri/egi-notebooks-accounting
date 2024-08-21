@@ -1,5 +1,11 @@
 FROM python:3
 
-COPY . /egi-notebooks-accounting
+WORKDIR /egi-notebooks-accounting
 
-RUN pip install --no-cache-dir -e /egi-notebooks-accounting/
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN pip install --no-cache-dir .

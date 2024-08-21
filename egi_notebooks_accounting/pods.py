@@ -1,5 +1,3 @@
-#! /usr/bin/python3
-
 import argparse
 import logging
 import os
@@ -11,10 +9,11 @@ from typing import Dict, List
 import peewee
 from dirq import QueueSimple
 
-from .model import VM, db, db_init
+from .model import VM, db_init
 from .prometheus import Prometheus
 
-CONFIG = "prometheus"
+CONFIG = "default"
+PROM_CONFIG = "prometheus"
 DEFAULT_CONFIG_FILE = "config.ini"
 DEFAULT_FILTER = "pod=~'jupyter-.*'"
 DEFAULT_FQANS: Dict[str, List[str]] = {}
@@ -39,9 +38,11 @@ def main():
     verbose = logging.DEBUG if verbose == "1" else logging.INFO
     logging.basicConfig(level=verbose)
     fqan_key = os.environ.get("FQAN_KEY", config.get("fqan_key", DEFAULT_FQAN_KEY))
-    flt = os.environ.get("FILTER", config.get("filter", DEFAULT_FILTER))
-    rng = os.environ.get("RANGE", config.get("range", DEFAULT_RANGE))
     spool_dir = os.environ.get("APEL_SPOOL", config.get("apel_spool"))
+
+    prom_config = parser[PROM_CONFIG] if PROM_CONFIG in parser else {}
+    flt = os.environ.get("FILTER", prom_config.get("filter", DEFAULT_FILTER))
+    rng = os.environ.get("RANGE", prom_config.get("range", DEFAULT_RANGE))
     usage_queries = {
         "cpu_duration": "sum by (name) (max_over_time(container_cpu_usage_seconds_total{%s}[%s]))"
         % (flt, rng),
@@ -62,21 +63,19 @@ def main():
     VM.cloud_compute_service = os.environ.get(
         "SERVICE", config.get("cloud_compute_service", VM.cloud_compute_service)
     )
-    VM.default_vo = os.environ.get(
-        "DEFAULT_VO", config.get("default_vo", VM.default_vo)
-    )
     db_file = os.environ.get("NOTEBOOKS_DB", config.get("notebooks_db", None))
 
     fqans = dict(DEFAULT_FQANS)
     if "VO" in parser:
-        config = parser["VO"]
-        for (vo, values) in config.items():
+        vo_config = parser["VO"]
+        for vo, values in vo_config.items():
             for value in values.split(","):
                 fqans[value] = vo
     logging.debug("FQAN: %s", fqans)
 
+    db = None
     if db_file:
-        db_init(db_file)
+        db = db_init(db_file)
         db.connect()
     prom = Prometheus(parser)
     tnow = time.time()
@@ -147,6 +146,7 @@ def main():
             continue
         pod.global_user_name = metric.get("annotation_hub_jupyter_org_username", None)
         pod.primary_group = metric.get("annotation_egi_eu_primary_group", None)
+        pod.flavor = metric.get("annotation_egi_eu_flavor", None)
     # ==== IMAGE ====
     data["query"] = (
         "last_over_time(kube_pod_container_info{"
@@ -170,7 +170,7 @@ def main():
         if "image" in metric:
             pod.image_id = metric["image"]
     # ==== resource usage queries ====
-    for (field, query) in usage_queries.items():
+    for field, query in usage_queries.items():
         data["query"] = query
         response = prom.query(data)
         for item in response["data"]["result"]:
@@ -196,28 +196,27 @@ def main():
         logging.debug(
             "fqan evaluation: pod %s, fqan_value %s", pod.local_id, fqan_value
         )
-        for (value, vo) in fqans.items():
-            if fqan_value == value:
-                pod.fqan = vo
-                break
+        if fqan_value in fqans:
+            pod.fqan = vo
+        elif fqan_value:
+            # just use the value that's in the pod
+            pod.fqan = fqan_value
 
     if prom.pods:
-        message = "APEL-cloud-message: v0.4\n" + "\n%%\n".join(
-            [pod.dump() for (uid, pod) in prom.pods.items()]
-        )
         if spool_dir:
             queue = QueueSimple.QueueSimple(spool_dir)
+            message = "APEL-cloud-message: v0.4\n" + "\n%%\n".join(
+                [pod.dump() for (uid, pod) in prom.pods.items()]
+            )
             queue.add(message)
             logging.debug("Dumped %d records to spool dir", len(prom.pods))
-        else:
-            print(message)
-        if db_file:
-            for (uid, pod) in prom.pods.items():
+        if db:
+            for uid, pod in prom.pods.items():
                 try:
                     pod.save(force_insert=True)
                 except peewee.IntegrityError:
                     pod.save()
-    if db_file:
+    if db:
         db.close()
 
 

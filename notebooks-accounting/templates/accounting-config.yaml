@@ -5,7 +5,7 @@ metadata:
   name: accounting
 data:
   config.ini: |
-    [prometheus]
+    [default]
     {{- if .Values.accounting.sitename }}
     site={{ .Values.accounting.sitename }}
     {{- else }}
@@ -21,16 +21,9 @@ data:
     {{- else }}
     # cloud_compute_service=
     {{- end }}
-
-    {{- if .Values.prometheus.url }}
-    url={{ .Values.prometheus.url }}
-    {{- else }}
-    # url=http://localhost:8080
+    {{- if.Values.debug }}
+    verbose=1
     {{- end }}
-    # user=
-    # password=
-    # verbose=0
-    # verify=0
     {{- if .Values.storage.apelSpool }}
     apel_spool={{ .Values.storage.apelSpool }}
     {{- else }}
@@ -42,6 +35,15 @@ data:
     # notebooks_db=
     {{- end }}
 
+    [prometheus]
+    {{- if .Values.prometheus.url }}
+    url={{ .Values.prometheus.url }}
+    {{- else }}
+    # url=http://localhost:8080
+    {{- end }}
+    # user=
+    # password=
+    # verify=0
     # filter=pod=~'jupyter-.*'
     range=24h
 
@@ -56,24 +58,23 @@ data:
     {{- if .Values.eosc.tokenUrl }}
     token_url={{ .Values.eosc.tokenUrl }}
     {{- end }}
-    {{- if .Values.eosc.refreshToken }}
-    refresh_token={{ .Values.eosc.refreshToken }}
-    {{- end }}
     {{- if .Values.eosc.clientSecret }}
     client_secret={{ .Values.eosc.clientSecret }}
     {{- end }}
     {{- if .Values.eosc.clientId }}
     client_id={{ .Values.eosc.clientId }}
     {{- end }}
-    {{- if .Values.eosc.argoUrl }}
-    argo_url={{ .Values.eosc.argoUrl }}
+    {{- if .Values.eosc.accountingUrl }}
+    accounting_url={{ .Values.eosc.accountingUrl }}
     {{- end }}
     {{- if .Values.eosc.installationId }}
     installation_id={{ .Values.eosc.installationId }}
     {{- end }}
-    {{- if .Values.eosc.usersMetric }}
-    users_metric={{ .Values.eosc.usersMetric }}
+    {{- if .Values.storage.timestamp }}
+    timestamp_file={{ .Values.storage.timestamp }}
     {{- end }}
-    {{- if .Values.eosc.sessionsMetric }}
-    sessions_metric={{ .Values.eosc.sessionsMetric }}
+
+    [eosc.flavors]
+    {{- range $key, $val := .Values.eosc.flavorMetrics }}
+    {{ $key }}={{ $val }}
     {{- end }}
