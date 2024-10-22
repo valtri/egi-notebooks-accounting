@@ -13,9 +13,6 @@ Enabling APEL accounting:
       schedule: 42 1 * * *
       hostcert: ...
       hostkey: ...
-    storage:
-      # APEL dump files would be kept, this will disable APEL dumps
-      apelSpool: /accounting/ssm
 
 Enabling EOSC accounting:
 
@@ -30,9 +27,18 @@ Enabling EOSC accounting:
         flavor1: id1
         ...
 
-## Local database
+## Debugging
 
-By default local database export to */accounts/notebooks.db* is enabled. It can be disabled by setting location to empty value:
+Verbosity:
+
+    debug: true
+
+APEL dumps to be created even without ssm:
+
+    storage:
+      apelSpool: /accounting/ssm
+
+Local database export to */accounts/notebooks.db* is enabled by default. It can be disabled by setting the location to empty value:
 
     storage:
       notebooksDb:
