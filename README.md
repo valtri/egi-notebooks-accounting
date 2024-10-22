@@ -28,7 +28,7 @@ Enabling EOSC accounting:
       installationId:
       flavorMetrics:
         flavor1: id1
-		...
+        ...
 
 ## Local database
 
