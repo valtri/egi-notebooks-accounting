@@ -6,15 +6,15 @@ EGI Notebooks accounting tools.
 
 See *notebooks-accounting/values.yaml* for Helm package values.
 
-Enabling APEL accounting:
+Enable APEL accounting:
 
     ssm:
-      # enable APEL (sender)
+      # enable APEL sender
       schedule: 42 1 * * *
       hostcert: ...
       hostkey: ...
 
-Enabling EOSC accounting:
+Enable EOSC accounting:
 
     eosc:
       schedule: 42 1 * * *
@@ -33,7 +33,7 @@ Verbosity:
 
     debug: true
 
-APEL dumps to be created even without ssm:
+Create APEL dumps even without enabled ssm:
 
     storage:
       apelSpool: /accounting/ssm
