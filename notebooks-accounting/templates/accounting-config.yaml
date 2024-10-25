@@ -26,7 +26,7 @@ data:
     {{- end }}
     {{- if hasKey .Values.storage "apelSpool" }}
     apel_spool={{ .Values.storage.apelSpool }}
-    {{- elif .Values.ssm.schedule }}
+    {{- else if .Values.ssm.schedule }}
     apel_spool={{ .Values.ssm.messaging.path }}
     {{- else }}
     # apel_spool=
