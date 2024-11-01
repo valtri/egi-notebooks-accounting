@@ -54,7 +54,7 @@ data:
     # password=
     {{- end }}
     # verify=0
-    {{- if .Values.prometheus.filter }}
+    {{- if hasKey .Values.prometheus "filter" }}
     filter={{ .Values.prometheus.filter }}
     {{- else }}
     # filter=pod=~'jupyter-.*'
