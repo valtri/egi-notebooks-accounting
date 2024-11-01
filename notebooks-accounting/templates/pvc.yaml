@@ -8,7 +8,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  {{- if hasKey "className" .Values.storage }}
+  {{- if hasKey .Values.storage "className" }}
   storageClassName: {{ .Values.storage.className }}
   {{- end }}
   resources:
