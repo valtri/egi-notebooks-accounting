@@ -6,24 +6,39 @@ EGI Notebooks accounting tools.
 
 See *notebooks-accounting/values.yaml* for Helm package values.
 
-Either grid certificate for APEL is required:
+Enable APEL accounting:
 
     ssm:
+      # enable APEL sender
+      schedule: 42 1 * * *
       hostcert: ...
       hostkey: ...
 
-Or APEL needs to be disabled:
+Enable EOSC accounting:
 
-    ssm:
-      # APEL sender not scheduled
-      schedule:
+    eosc:
+      schedule: 42 1 * * *
+      tokenUrl:
+      clientId:
+      clientSecret:
+      accountingUrl:
+      installationId:
+      flavorMetrics:
+        flavor1: id1
+        ...
+
+## Debugging
+
+Verbosity:
+
+    debug: true
+
+Create APEL dumps even without enabled ssm:
+
     storage:
-      # APEL dump files would be kept, this will disable APEL dumps
-      apelSpool:
+      apelSpool: /accounting/ssm
 
-## Local database
-
-By default local database export to */accounts/notebooks.db* is enabled. It can be disabled by setting location to empty value:
+Local database export to */accounts/notebooks.db* is enabled by default. It can be disabled by setting the location to empty value:
 
     storage:
       notebooksDb:
