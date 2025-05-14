@@ -47,7 +47,7 @@ Local database export to _/accounts/notebooks.db_ is enabled by default. It can 
 
 FQAN filed mapping for accounting.
 
-By default the values are taken from _primary\_group_ field (=the first matched OIDC role in hub config _allowed\_groups_).
+By default the values are taken from _primary_group_ field (=the first matched OIDC role in hub config _allowed_groups_).
 
 Example (multiple values per FQAN possible, separated by comma):
 
