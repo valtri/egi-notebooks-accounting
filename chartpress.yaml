@@ -1,7 +1,7 @@
 ---
 charts:
   - name: notebooks-accounting
-    imagePrefix: registry.egi.eu/vo.notebooks.egi.eu/svc-
+    imagePrefix: registry.egi.eu/vo.notebooks.egi.eu/devel/svc-
 
     images:
       accounting:

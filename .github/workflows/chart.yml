@@ -6,6 +6,7 @@ on:
     # only pushes on master so we don't push intermediate results
     branches:
       - master
+      - no-limits
       # also when tagging so we get nice versioning
     tags:
       - "*"
