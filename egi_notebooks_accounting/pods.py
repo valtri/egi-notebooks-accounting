@@ -44,14 +44,19 @@ def main():
     flt = os.environ.get("FILTER", prom_config.get("filter", DEFAULT_FILTER))
     rng = os.environ.get("RANGE", prom_config.get("range", DEFAULT_RANGE))
     usage_queries = {
-        "cpu_duration": "sum by (name) (max_over_time(container_cpu_usage_seconds_total{%s}[%s]))"
+        # container_cpu_usage_seconds_total is missing uid label (pod id), get it from the kube_pod_info (requires Prometheus >= 2.4)
+        "cpu_duration": "(sum by (namespace, pod) (max_over_time(container_cpu_usage_seconds_total{%s}[%s]))) \
+                        * on (pod, namespace) group_left(uid) kube_pod_info"
         % (flt, rng),
         "cpu_count": "sum by (uid) (max_over_time(kube_pod_container_resource_requests{%s,resource='cpu'}[%s]))"
         % (flt, rng),
-        "memory": "sum by (name) (max_over_time(container_memory_max_usage_bytes{%s}[%s]))"
+        # container_memory_max_usage_bytes is missing uid label (pod id), get it from the kube_pod_info (requires Prometheus >= 2.4)
+        "memory": "(sum by (namespace, pod) (max_over_time(container_memory_max_usage_bytes{%s}[%s]))) * on (pod, namespace) group_left(uid) kube_pod_info"
         % (flt, rng),
+        # XXX: metric deprecated
         "network_inbound": "sum by (name) (last_over_time(container_network_receive_bytes_total{%s}[%s]))"
         % (flt, rng),
+        # XXX: metric deprecated
         "network_outbound": "sum by (name) (last_over_time(container_network_transmit_bytes_total{%s}[%s]))"
         % (flt, rng),
     }
