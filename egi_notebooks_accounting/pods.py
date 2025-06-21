@@ -183,15 +183,14 @@ def main():
         data["query"] = query
         response = prom.query(data)
         for item in response["data"]["result"]:
-            # print(item)
+            # print(f"{field}: {item}")
             uid = None
-            if field not in ["cpu_count"]:
+            if "uid" not in item["metric"]:
                 # dirty hack: parse POD uid from "name" label
                 if "name" not in item["metric"]:
                     continue
                 uid = item["metric"]["name"].split("_")[-2]
             pod = prom.get_pod(item, uid)
-            metric = item["metric"]
             if pod is None:
                 # missing is OK: it is better to query usage with bigger range,
                 # also it could be too shortly running POD
@@ -199,6 +198,7 @@ def main():
             value = float(item["value"][1])
             item = getattr(pod, field)
             setattr(pod, field, item + value)
+            # print(f" ==> {pod.machine} {field} += {value}")
     # ==== FQANS postprocessing ====
     for pod in prom.pods.values():
         fqan_value = getattr(pod, fqan_key, None)
