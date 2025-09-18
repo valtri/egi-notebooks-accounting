@@ -43,21 +43,18 @@ def main():
     prom_config = parser[PROM_CONFIG] if PROM_CONFIG in parser else {}
     flt = os.environ.get("FILTER", prom_config.get("filter", DEFAULT_FILTER))
     rng = os.environ.get("RANGE", prom_config.get("range", DEFAULT_RANGE))
+    # get uid from the kube_pod_info (requires Prometheus >= 2.4)
     usage_queries = {
-        # container_cpu_usage_seconds_total is missing uid label (pod id), get it from the kube_pod_info (requires Prometheus >= 2.4)
         "cpu_duration": "(sum by (namespace, pod) (max_over_time(container_cpu_usage_seconds_total{%s}[%s]))) \
                         * on (pod, namespace) group_left(uid) kube_pod_info"
         % (flt, rng),
         "cpu_count": "sum by (uid) (max_over_time(kube_pod_container_resource_requests{%s,resource='cpu'}[%s]))"
         % (flt, rng),
-        # container_memory_max_usage_bytes is missing uid label (pod id), get it from the kube_pod_info (requires Prometheus >= 2.4)
         "memory": "(sum by (namespace, pod) (max_over_time(container_memory_max_usage_bytes{%s}[%s]))) * on (pod, namespace) group_left(uid) kube_pod_info"
         % (flt, rng),
-        # XXX: metric deprecated
-        "network_inbound": "sum by (name) (last_over_time(container_network_receive_bytes_total{%s}[%s]))"
+        "network_inbound": "(sum by (namespace, pod) (last_over_time(container_network_receive_bytes_total{%s}[%s]))) * on (pod, namespace) group_left(uid) kube_pod_info"
         % (flt, rng),
-        # XXX: metric deprecated
-        "network_outbound": "sum by (name) (last_over_time(container_network_transmit_bytes_total{%s}[%s]))"
+        "network_outbound": "(sum by (namespace, pod) (last_over_time(container_network_transmit_bytes_total{%s}[%s]))) * on (pod, namespace) group_left(uid) kube_pod_info"
         % (flt, rng),
     }
 
@@ -189,7 +186,11 @@ def main():
                 # dirty hack: parse POD uid from "name" label
                 if "name" not in item["metric"]:
                     continue
-                uid = item["metric"]["name"].split("_")[-2]
+                a = item["metric"]["name"].split("_")
+                if len(a) >= 2:
+                    uid = a[-2]
+                else:
+                    continue
             pod = prom.get_pod(item, uid)
             if pod is None:
                 # missing is OK: it is better to query usage with bigger range,
