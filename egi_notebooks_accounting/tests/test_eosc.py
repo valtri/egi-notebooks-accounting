@@ -245,3 +245,28 @@ def test_dupla(pytestconfig, requests_mock, delete_timestamp) -> None:
         results,
         interval=timedelta(hours=12),
     )
+
+
+def test_leap(pytestconfig, requests_mock, delete_timestamp) -> None:
+    """
+    Test with a pod across boundary with a leap second.
+
+    There is actually no support for leap seconds in python datetime module, so pod end time in the database will be as usual.
+    """
+    from_date = dateutil.parser.parse("2016-12-31T00:10:00Z")
+    start_times: list[dattime] = [
+        dateutil.parser.parse("2016-12-31T20:00:00Z"),
+    ]
+    wall_times: list[float] = [
+        8 * 3600,
+    ]
+    results: list[float] = [0, 4.0, 4.0, 0]
+    launch_eosc(
+        pytestconfig,
+        requests_mock,
+        from_date,
+        start_times,
+        wall_times,
+        results,
+        interval=timedelta(hours=24),
+    )
