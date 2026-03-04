@@ -36,7 +36,7 @@ token_url=https://proxy.staging.eosc-federation.eu/OIDC/token
 client_secret=<client secret>
 client_id=<client_id>
 accounting_url=https://api.acc.staging.eosc.grnet.gr
-installaion_id=<id of the installation to report accounting for>
+installation_id=<id of the installation to report accounting for>
 timestamp_file=<file where the timestamp of the last run is kept>
 
 [eosc.flavors]
@@ -216,7 +216,7 @@ def generate_day_metrics(
             logging.debug("Failed to write timestamp file '{timestamp_file}': {e}")
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description="EOSC Accounting metric pusher")
     parser.add_argument(
         "-c", "--config", help="config file", default=DEFAULT_CONFIG_FILE
@@ -226,7 +226,7 @@ def main():
     )
     parser.add_argument("--from-date", help="Start date to report from")
     parser.add_argument("--to-date", help="End date to report to")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     parser = ConfigParser()
     parser.read(args.config)
